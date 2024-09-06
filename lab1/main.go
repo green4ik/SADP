@@ -64,7 +64,7 @@ func main() {
 		fmt.Println("Число має бути більше нуля")
 		return
 	}
-	lcg, err := NewLCG((2<<11)-1, (2<<4)*(2<<4), 2, 8)
+	lcg, err := NewLCG(32, 7, 0, 1)
 	if err != nil {
 		fmt.Println("Умови параметрів незадовільні")
 		return
