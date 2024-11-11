@@ -64,12 +64,12 @@ func main() {
 		fmt.Println("Число має бути більше нуля")
 		return
 	}
-	lcg, err := NewLCG(32, 7, 0, 1)
+	lcg, err := NewLCG(2<<21, 729, 233, 5)
 	if err != nil {
 		fmt.Println("Умови параметрів незадовільні")
 		return
 	}
-	toFile(*lcg, iters)
+	//toFile(*lcg, iters)
 	fmt.Printf("Модуль : %d \nМножник : %d \nПриріст : %d \nПочаткове число : %d\n",
 		lcg.modulus, lcg.multiplier, lcg.increment, lcg.seed)
 	fmt.Println("===============================")
@@ -77,7 +77,10 @@ func main() {
 	for i := 0; i < iters; i++ {
 		lcgseed := lcg.Next()
 		arr = append(arr, lcgseed)
-		fmt.Println(lcgseed)
+		//fmt.Println(lcgseed)
+		if i%10 == 0 {
+			fmt.Println(i / 10)
+		}
 		for j, val := range arr {
 			if val == lcgseed && i != j {
 				defer fmt.Printf("Елемент %d повторюється з елементом %d", j, i)

@@ -49,6 +49,75 @@ func main() {
 				if err != nil {
 					fmt.Println("Помилка відправки повідомлення:", err)
 				}
+			} else if userMessage == "/cancel" {
+				_, err := bot.SendMessage(&telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: chatId},
+					Text:   "Режим скинут. Використовуй /md5 або /rc5 для вибору режиму.",
+				})
+				if err != nil {
+					fmt.Println("Помилка відправки повідомлення:", err)
+				}
+				userMode[chatId] = ""
+			} else if userMessage == "/localfileE" {
+				userMode[chatId] = "localfileencrypt"
+				_, err := bot.SendMessage(&telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: chatId},
+					Text:   "Напишіть назву локального файлу",
+				})
+				if err != nil {
+					fmt.Println("Помилка відправки повідомлення:", err)
+				}
+			} else if userMessage == "/localfileD" {
+				userMode[chatId] = "localfiledecrypt"
+				_, err := bot.SendMessage(&telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: chatId},
+					Text:   "Напишіть назву локального файлу",
+				})
+				if err != nil {
+					fmt.Println("Помилка відправки повідомлення:", err)
+				}
+			} else if mode, ok := userMode[chatId]; ok && mode == "localfileencrypt" {
+				response := ""
+				if passWord != "" {
+					keyhash := md5([]byte(passWord))
+					err := encryptFile(userMessage, "encrypted_local_file", keyhash[:])
+					if err != nil {
+						response = fmt.Sprint("Щось пішло не так : %v", err)
+					} else {
+						response = "Зашифровано файл"
+					}
+				} else {
+					response = "Парольна фраза відстуня, спробуйте /setpassword"
+				}
+				_, err1 := bot.SendMessage(&telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: chatId},
+					Text:   response,
+				})
+				if err1 != nil {
+					fmt.Println("Помилка відправки повідомлення:", err)
+				}
+				userMode[chatId] = ""
+			} else if mode, ok := userMode[chatId]; ok && mode == "localfiledecrypt" {
+				response := ""
+				if passWord != "" {
+					keyhash := md5([]byte(passWord))
+					err := decryptFile(userMessage, "decrypted_local_file", keyhash[:])
+					if err != nil {
+						response = fmt.Sprint("Щось пішло не так : %v", err)
+					} else {
+						response = "Розшифровано файл"
+					}
+				} else {
+					response = "Парольна фраза відстуня, спробуйте /setpassword"
+				}
+				_, err1 := bot.SendMessage(&telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: chatId},
+					Text:   response,
+				})
+				if err1 != nil {
+					fmt.Println("Помилка відправки повідомлення:", err)
+				}
+				userMode[chatId] = ""
 			} else if mode, ok := userMode[chatId]; ok && mode == "setpassword" {
 				userMode[chatId] = ""
 				passWord = userMessage
@@ -103,15 +172,6 @@ func main() {
 				if err != nil {
 					fmt.Println("Помилка відправки повідомлення:", err)
 				}
-			} else if userMessage == "/cancel" {
-				_, err := bot.SendMessage(&telego.SendMessageParams{
-					ChatID: telego.ChatID{ID: chatId},
-					Text:   "Режим скинут. Використовуй /md5 або /rc5 для вибору режиму.",
-				})
-				if err != nil {
-					fmt.Println("Помилка відправки повідомлення:", err)
-				}
-				userMode[chatId] = ""
 			} else if mode, ok := userMode[chatId]; ok && mode == "md5" && update.Message.Document == nil {
 				///////////////////////////////////////////////////////////////////////////////////////////// MD5
 				hash := md5([]byte(userMessage))
@@ -129,7 +189,7 @@ func main() {
 				response := ""
 				fileToSend := "encrypted"
 				if passWord != "" {
-					keyhash := []byte(passWord)
+					keyhash := md5([]byte(passWord))
 					err := encryptStringToFile([]byte(userMessage), keyhash[:], fileToSend)
 					if err != nil {
 						response = "Не вдалося зашифрувати : " + fmt.Sprintf("%v", err)
@@ -143,7 +203,7 @@ func main() {
 						document := tu.Document(
 							telego.ChatID{ID: chatId},
 							tu.File(newfile),
-						).WithCaption("decrypted")
+						)
 
 						msg, err := bot.SendDocument(document)
 						if err != nil {
@@ -168,7 +228,7 @@ func main() {
 				response := ""
 				response = "Розшифрований текст : "
 				if passWord != "" {
-					keyhash := []byte(passWord)
+					keyhash := md5([]byte(passWord))
 
 					err := decryptFile("encrypted.txt", "decrypted.txt", keyhash[:])
 					if err != nil {
@@ -238,7 +298,7 @@ func main() {
 					fmt.Println("Помилка завантаження файлу:", err)
 					continue
 				}
-				keyhash := []byte(passWord)
+				keyhash := md5([]byte(passWord))
 				encryptedFilePath := "file_to_send"
 				err1 := encryptFile(localFilePath, encryptedFilePath, keyhash[:])
 				if err1 != nil {
@@ -253,7 +313,7 @@ func main() {
 				document := tu.Document(
 					telego.ChatID{ID: chatId},
 					tu.File(newfile),
-				).WithCaption("encrypted")
+				)
 
 				msg, err := bot.SendDocument(document)
 				if err != nil {
@@ -275,7 +335,7 @@ func main() {
 					fmt.Println("Помилка завантаження файлу:", err)
 					continue
 				}
-				keyhash := []byte(passWord)
+				keyhash := md5([]byte(passWord))
 				decryptedFilePath := "file_to_send"
 				err1 := decryptFile(localFilePath, decryptedFilePath, keyhash[:])
 				if err1 != nil {
@@ -290,7 +350,7 @@ func main() {
 				document := tu.Document(
 					telego.ChatID{ID: chatId},
 					tu.File(newfile),
-				).WithCaption("decrypted")
+				)
 
 				msg, err := bot.SendDocument(document)
 				if err != nil {

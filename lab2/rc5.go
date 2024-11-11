@@ -20,7 +20,6 @@ var (
 	Qw uint16 = 0x9e37
 )
 
-// Генератор псевдовипадкових чисел (LCG)
 var seed uint32 = 12345
 
 func lcg() uint16 {
@@ -127,7 +126,6 @@ func decryptBlock(ciphertext []byte, S []uint16) []byte {
 	return plaintext
 }
 
-// Функція для шифрування строки і запису у файл
 func encryptStringToFile(text, key []byte, filename string) error {
 	ciphertext, _ := encryptString(text, key)
 	err := ioutil.WriteFile(filename, ciphertext, 0644)
@@ -137,7 +135,6 @@ func encryptStringToFile(text, key []byte, filename string) error {
 	return nil
 }
 
-// Функція для шифрування файла
 func encryptFile(inputFilename, outputFilename string, key []byte) error {
 	// Читаємо дані з файлу
 	plaintext, err := ioutil.ReadFile(inputFilename)
@@ -145,10 +142,8 @@ func encryptFile(inputFilename, outputFilename string, key []byte) error {
 		return fmt.Errorf("cannot read from file: %v", err)
 	}
 
-	// Шифруємо ці дані
 	ciphertext, _ := encryptString(plaintext, key)
 
-	// Записуємо зашифровані дані у новий файл
 	err = ioutil.WriteFile(outputFilename, ciphertext, 0644)
 	if err != nil {
 		return fmt.Errorf("cannot write to file: %v", err)
@@ -156,7 +151,6 @@ func encryptFile(inputFilename, outputFilename string, key []byte) error {
 	return nil
 }
 
-// Функція для шифрування строки
 func encryptString(plaintext, key []byte) ([]byte, []byte) {
 	blockSize := 4
 	S := keyExpansion(key)
@@ -185,21 +179,17 @@ func encryptString(plaintext, key []byte) ([]byte, []byte) {
 	return ciphertext, iv
 }
 
-// Функція для розшифрування файла
 func decryptFile(inputFilename, outputFilename string, key []byte) error {
-	// Читаємо зашифрований файл
 	ciphertext, err := ioutil.ReadFile(inputFilename)
 	if err != nil {
 		return fmt.Errorf("cannot read from file: %v", err)
 	}
 
-	// Розшифровуємо дані
 	plaintext, err := decryptString(ciphertext, key)
 	if err != nil {
 		return fmt.Errorf("decryption failed: %v", err)
 	}
 
-	// Записуємо розшифровані дані у файл
 	err = ioutil.WriteFile(outputFilename, plaintext, 0644)
 	if err != nil {
 		return fmt.Errorf("cannot write to file: %v", err)
@@ -207,12 +197,10 @@ func decryptFile(inputFilename, outputFilename string, key []byte) error {
 	return nil
 }
 
-// Функція для розшифрування строки
 func decryptString(ciphertext, key []byte) ([]byte, error) {
 	blockSize := 4
 	S := keyExpansion(key)
 
-	// Отримуємо IV, який зашифрований в першому блоці
 	encryptedIV := ciphertext[:blockSize]
 	iv := decryptBlock(encryptedIV, S)
 
